@@ -1,19 +1,32 @@
 from pathlib import Path
 
 
-class InputFileValidator:
-    def __init__(self, input_path):
-        self.input_file = Path(input_path)
+class BaseFileValidator:
+    def __init__(self, path, validators):
+        self.file = Path(path)
+        self.validators = validators or []
 
     def validate(self):
-        # Check file is exist
-        if not self.input_file.exists():
+        for validator in self.validators:
+            getattr(self, '_validate_file_' + validator, None)()
+
+    def _validate_file_existence(self):
+        if not self.file.exists():
             raise IOError('File is not exists')
 
-        # Check file is really file (LOL)
-        if not self.input_file.is_file():
+    def _validate_file_exactly(self):
+        if not self.file.is_file():
             raise IOError('This is not file')
 
-        # Check file extension
-        if not self.input_file.suffix == '.xml':
+
+class InputFileValidator(BaseFileValidator):
+    def _validate_file_xml_extension(self):
+        if not self.file.suffix == '.xml':
             raise IOError('File has wrong format. Only XML accepted.')
+
+
+class OutputFileValidator(BaseFileValidator):
+    def _validate_file_extension(self):
+
+        if not (self.file.suffix in ['.txt', '.rtf']):
+            raise IOError('File has wrong format. Only TXT or RTF accepted.')
